@@ -9,8 +9,8 @@ use crate::{
     schemas, ValidationError,
 };
 use ahash::AHashMap;
-use std::{fmt, sync::Arc};
 use serde_json::Value;
+use std::{fmt, sync::Arc};
 
 const EXPECT_MESSAGE: &str = "Valid meta-schema!";
 
@@ -555,7 +555,7 @@ impl CompilationOptions {
     /// The end-user will still receive `ValidationError` that are crafted manually during
     /// compilation.
     #[inline]
-    pub(crate) fn without_schema_validation(&mut self) -> &mut Self {
+    pub fn without_schema_validation(&mut self) -> &mut Self {
         self.validate_schema = false;
         self
     }
@@ -573,21 +573,22 @@ impl CompilationOptions {
     }
 
     pub fn add_keyword<T>(mut self, keyword: T, keyword_definition: KeywordDefinition) -> Self
-        where T: Into<String>
+    where
+        T: Into<String>,
     {
-        self.custom_keywords.insert(keyword.into(), keyword_definition);
+        self.custom_keywords
+            .insert(keyword.into(), keyword_definition);
         self
     }
 
-    pub(crate) fn custom_keyword_definition(&self, keyword: &str) -> Option<&KeywordDefinition>
-    {
+    pub(crate) fn custom_keyword_definition(&self, keyword: &str) -> Option<&KeywordDefinition> {
         self.custom_keywords.get(keyword)
     }
 }
 
 #[derive(Clone)]
 pub enum KeywordDefinition {
-    Schema(Value)
+    Schema(Value),
 }
 
 // format name & a pointer to a check function
