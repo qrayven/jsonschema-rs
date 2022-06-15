@@ -552,7 +552,7 @@ impl CompilationOptions {
     /// The end-user will still receive `ValidationError` that are crafted manually during
     /// compilation.
     #[inline]
-    pub(crate) fn without_schema_validation(&mut self) -> &mut Self {
+    pub fn without_schema_validation(&mut self) -> &mut Self {
         self.validate_schema = false;
         self
     }
