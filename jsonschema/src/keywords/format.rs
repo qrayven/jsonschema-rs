@@ -493,7 +493,18 @@ pub(crate) fn compile<'a>(
             "duration" if draft_version == Draft::Draft201909 => {
                 Some(DurationValidator::compile(context))
             }
-            _ => None,
+            _ => {
+                if context.config.are_unknown_formats_ignored() {
+                    None
+                } else {
+                    return Some(Err(ValidationError::format(
+                        JSONPointer::default(),
+                        context.clone().schema_path.into(),
+                        schema,
+                        "unknown format",
+                    )));
+                }
+            }
         }
     } else {
         Some(Err(ValidationError::single_type_error(
@@ -507,11 +518,13 @@ pub(crate) fn compile<'a>(
 
 #[cfg(test)]
 mod tests {
+    use jsonschema_valid::ValidationError;
     use serde_json::json;
+    use valico::ValicoErrors;
 
     #[cfg(feature = "draft201909")]
     use crate::schemas::Draft::Draft201909;
-    use crate::{compilation::JSONSchema, tests_util};
+    use crate::{compilation::JSONSchema, error::ValidationErrorKind, tests_util};
 
     #[test]
     fn ignored_format() {
@@ -519,6 +532,20 @@ mod tests {
         let instance = json!("foo");
         let compiled = JSONSchema::compile(&schema).unwrap();
         assert!(compiled.is_valid(&instance))
+    }
+
+    #[test]
+    fn unknown_format_should_not_be_ignored() {
+        let schema = json!({ "format": "custom", "type": "string"});
+        let validation_error = JSONSchema::options()
+            .should_ignore_unknown_formats(false)
+            .compile(&schema)
+            .expect_err("the validation error should be returned");
+
+        assert!(
+            matches!(validation_error.kind, ValidationErrorKind::Format { format } if format == "unknown format")
+        );
+        assert_eq!("\"custom\"", validation_error.instance.to_string())
     }
 
     #[test]
